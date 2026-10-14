@@ -1,0 +1,47 @@
+{
+  "tag": "local-cpu-wsl",
+  "model": "models/Qwen2.5-0.5B-Instruct",
+  "device": "cpu",
+  "dtype": "float32",
+  "batch": 1,
+  "decode_steps": 32,
+  "warmup": 1,
+  "repeats": 3,
+  "num_params": 494032768,
+  "env": {
+    "timestamp": "2026-10-14T20:15:17+08:00",
+    "hostname": "hy",
+    "os": "Linux 6.18.54.1-microsoft-standard-WSL2",
+    "python": "3.10.12",
+    "cpu_model": "Intel(R) Core(TM) i5-10210U CPU @ 1.60GHz",
+    "cpu_count": 8,
+    "git_commit": "d071425",
+    "git_dirty": true,
+    "torch": "2.4.1+cpu",
+    "cuda_runtime": null,
+    "gpu_name": null,
+    "gpu_mem_gb": null,
+    "gpu_capability": null,
+    "transformers": "4.44.2"
+  },
+  "load_time_s": 14.016,
+  "prefill": [
+    {
+      "prompt_tokens": 128,
+      "latency_ms": 1425.48,
+      "tokens_per_s": 89.8
+    },
+    {
+      "prompt_tokens": 512,
+      "latency_ms": 4470.83,
+      "tokens_per_s": 114.5
+    }
+  ],
+  "decode": {
+    "prompt_tokens": 32,
+    "ttft_ms": 340.78,
+    "tpot_ms": 130.98,
+    "tokens_per_s": 7.6,
+    "total_ms_for_N_steps": 4401.24
+  }
+}

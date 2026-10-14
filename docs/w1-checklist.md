@@ -36,9 +36,9 @@
 
 ### Day 2（10/15）
 
-- [ ] 装 WSL2 + Ubuntu 22.04：**管理员** PowerShell 里跑 `wsl --install -d Ubuntu-22.04`，然后重启
-- [ ] 重启后首次启动 Ubuntu，设置 UNIX 用户名与密码（纯小写英文，记牢，这是 sudo 密码）
-- [ ] 在 WSL 里一次跑完剩余步骤（下面这一条即可，内含克隆 + 装工具链 + 初始化环境）
+- [x] 装 WSL2 + Ubuntu 22.04：**管理员** PowerShell 里跑 `wsl --install -d Ubuntu-22.04`，然后重启
+- [x] 重启后首次启动 Ubuntu，设置 UNIX 用户名与密码（纯小写英文，记牢，这是 sudo 密码）
+- [x] 在 WSL 里一次跑完剩余步骤（下面这一条即可，内含克隆 + 装工具链 + 初始化环境）
 
 ```bash
 sudo apt update && sudo apt install -y git \
@@ -55,8 +55,8 @@ sudo apt update && sudo apt install -y git \
 
 ### Day 3（10/16）
 
-- [ ] `bash scripts/bootstrap.sh cpu`，观察是否一次跑通
-- [ ] 记录第一个卡点（哪一步报错、报什么）——这是最值钱的复盘素材
+- [x] `bash scripts/bootstrap.sh cpu`，观察是否一次跑通
+- [x] 记录第一个卡点（哪一步报错、报什么）——这是最值钱的复盘素材
 
 ### Day 4（10/17）
 
@@ -93,3 +93,70 @@ sudo apt update && sudo apt install -y git \
 4. 同样参数换机器复跑，数字能对上（5% 内）？
 5. 能不看笔记手推 KV Cache 公式？
 6. 账上花了多少钱，心里有数？
+
+---
+
+## 执行记录：2026-10-14（实际发生了什么）
+
+### Day 1 —— 完成
+
+- Git 早已装在 `D:\Git`（2.56.0），只是没进 PATH，加一行即可，不必重装
+- SSH 密钥在 `C:\Users\86195\.ssh\id_ed25519`，指纹 `SHA256:DfFVU8Mq9OAXaccqyUjzdrpq/U05ZhIkfGzBLWu5`
+- 公开仓库 https://github.com/xh456/mini-infer 建立并推送，首个提交 `892882c`
+
+### Day 2 —— 完成
+
+- WSL 平台 3.0.3.0，内核 6.18.54.1，WSLg 1.0.79
+- Ubuntu 22.04.5 LTS，用户 `hy`（uid 1000，已在 sudo 组）；
+  `/etc/wsl.conf` 已启用 `systemd=true` 并设 `user.default=hy`
+- 工具链：gcc 11.4.0 / cmake 3.22.1 / ninja 1.10.1 / Python 3.10.12 / git 2.34.1
+- apt 源切换到清华镜像，原文件备份为 `/etc/apt/sources.list.bak`
+- 发行版位于 `C:\Users\86195\AppData\Local\wsl\{a00d4c39-...}`；
+  空间紧张时可用 `wsl --manage Ubuntu-22.04 --move D:\wsl\Ubuntu-22.04` 迁移
+
+### Day 3 —— 完成
+
+`bash scripts/bootstrap.sh cpu` 一次跑通，退出码 0，冒烟测试 4 项全过
+（含"贪心解码两次结果完全一致"——这是后续数值对拍的前提）。
+
+第一组基线（本地 CPU / fp32 / batch=1，数据在 `bench/results/20261014-201608-local-cpu-wsl.json`）：
+
+| 指标 | 数值 |
+|---|---|
+| 模型加载 | 14.02 s |
+| prefill 128 token | 1425.48 ms（89.8 tok/s） |
+| prefill 512 token | 4470.83 ms（114.5 tok/s） |
+| decode TTFT | 340.78 ms |
+| decode TPOT | 130.98 ms |
+| decode 吞吐 | 7.6 tok/s |
+
+**这不是云端基线**，只用于验证测量链路；硬件不同，数字不可比。
+
+### 遇到的三个真问题（比顺利的部分更值得记住）
+
+1. **`download.pytorch.org` 被连接重置**（curl 返回码 000）。
+   已在 `bootstrap.sh` 里加了自动回退：探测官方 index 不可达时改用阿里云
+   `pytorch-wheels` 平铺目录，并注意它需要 `--find-links` 配合带后缀的
+   `torch==2.4.1+cpu` 版本号，用 `--index-url` 是不行的。
+2. **`raw.githubusercontent.com` 被重置**，`wsl --install -d Ubuntu-22.04` 会反复重试，
+   表面上看像卡死，实际上最终能成功（走微软 CDN）。判断长任务是否卡死，
+   要看日志文件或文件大小增长，**不能只看终端有没有输出**。
+3. **WSL 内访问 GitHub HTTPS 超时**（`github.com:443` 连 134 秒后失败）。
+   绕行方案：从 Windows 侧仓库直接同步，不走网络——
+
+```bash
+cd /mnt/d/dev/mini-infer && tar cf - --exclude=.git --exclude=.venv . | (cd ~/mini-infer && tar xf -)
+```
+
+   反向同步测量产物：`cp ~/mini-infer/bench/results/*.json /mnt/d/dev/mini-infer/bench/results/`
+
+### W1 完成标准核对
+
+| 标准 | 状态 |
+|---|---|
+| 新机器上一条命令重建环境并跑通冒烟测试 | 已达成（`scripts/bootstrap.sh cpu`） |
+| GitHub 上有真实、带时间戳的提交记录 | 已达成（4 个提交） |
+| 至少一份带完整四要素的基线 JSON | 已达成（本地 CPU，含 env 报告） |
+| 换机器复跑数字能对上（5% 内） | **待办**：需要云 GPU 实例 |
+| 能不看笔记手推 KV Cache 公式 | **待办**：Day 7 自测 |
+| 账上花了多少钱心里有数 | **待办**：云平台尚未开通 |

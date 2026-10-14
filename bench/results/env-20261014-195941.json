@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-10-14T19:59:41+08:00",
+  "hostname": "hy",
+  "os": "Linux 6.18.54.1-microsoft-standard-WSL2",
+  "python": "3.10.12",
+  "cpu_model": "Intel(R) Core(TM) i5-10210U CPU @ 1.60GHz",
+  "cpu_count": 8,
+  "git_commit": "d071425",
+  "git_dirty": true,
+  "torch": "2.4.1+cpu",
+  "cuda_runtime": null,
+  "gpu_name": null,
+  "gpu_mem_gb": null,
+  "gpu_capability": null,
+  "transformers": "4.44.2"
+}
