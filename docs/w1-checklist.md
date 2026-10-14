@@ -1,5 +1,9 @@
 # W1 验收清单（10/14 - 10/20）
 
+**远端仓库**：https://github.com/xh456/mini-infer
+
+> 这份清单是活的：每完成一项就勾掉并提交。提交记录本身就是"计划、执行、复盘"的证据。
+
 ## 我已经替你完成的部分
 
 - [x] 项目目录结构（`src/` `csrc/` `bench/` `scripts/` `tests/` `docs/` `budget/`）
@@ -20,10 +24,15 @@
 
 ### Day 1（10/14）
 
-- [ ] 把 `D:\Git\cmd` 加进 PATH（见 `docs/infra-setup.md` 第 1 节）
-- [ ] 配置 git 身份 + 生成 SSH key 并贴到 GitHub
-- [ ] 在 GitHub 建公开仓库 `mini-infer`
-- [ ] `git init` 并推送第一批提交
+- [x] 把 `D:\Git\cmd` 加进 PATH（见 `docs/infra-setup.md` 第 1 节）
+- [x] 配置 git 身份 + 生成 SSH key 并贴到 GitHub
+- [x] 在 GitHub 建公开仓库 `mini-infer`
+- [x] `git init` 并推送第一批提交（首个提交 `892882c`）
+
+> Day 1 已全部完成。环境勘察的结论记在下面，避免后面重复踩坑：
+> - Git 已装在 `D:\Git`（2.56.0），无需重新安装
+> - 显卡为 MX330 / 2GB / 计算能力 6.1，只做正确性验证，性能数字一律来自云 GPU
+> - 系统级 `core.autocrlf=true` 已被 `.gitattributes` 与仓库级配置双重覆盖，脚本恒为 LF
 
 ### Day 2（10/15）
 
