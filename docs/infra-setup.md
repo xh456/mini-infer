@@ -46,11 +46,30 @@ Get-Content "$env:USERPROFILE\.ssh\id_ed25519.pub" | Set-Clipboard
 wsl --install -d Ubuntu-22.04
 ```
 
+如果上面这条命令只回一句"未安装适用于 Linux 的 Windows 子系统"，
+说明它没有拿到提权（普通用户身份下它会返回这个含糊的错误，而不是明确报权限不足）。
+确认你打开的是**管理员** PowerShell（标题栏会带"管理员"字样）。
+万一仍然失败，走传统路线逐步启用：
+
+```powershell
+dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
+dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
+# 重启之后：
+wsl --set-default-version 2
+wsl --install -d Ubuntu-22.04
+```
+
+如果报虚拟化相关的错误，进 BIOS 打开 Intel VT-x（联想机型一般在
+Configuration 或 Advanced 页下，名称类似 Intel Virtualization Technology）。
+
 重启后设置 Linux 用户名密码，然后：
 
 ```bash
 sudo apt update && sudo apt install -y build-essential cmake ninja-build gdb clang git curl
 ```
+
+更省事的做法：直接跑仓库里的 `scripts/wsl-setup.sh`，它把工具链、
+uv 和项目环境一次装完。
 
 关于 Python 版本，修正一下之前的说法：**Ubuntu 22.04 自带 Python 3.10，
 直接用就行，不用额外装 3.11**。这个项目对 3.10 和 3.11 都安全，

@@ -36,9 +36,19 @@
 
 ### Day 2（10/15）
 
-- [ ] 装 WSL2 + Ubuntu 22.04（管理员权限，需重启）
-- [ ] WSL 里 `sudo apt install build-essential cmake ninja-build gdb clang`
-- [ ] 在 WSL 里克隆仓库到 `~/mini-infer`（**不要**把仓库放进 `/mnt/d`，跨文件系统 IO 会慢十倍）
+- [ ] 装 WSL2 + Ubuntu 22.04：**管理员** PowerShell 里跑 `wsl --install -d Ubuntu-22.04`，然后重启
+- [ ] 重启后首次启动 Ubuntu，设置 UNIX 用户名与密码（纯小写英文，记牢，这是 sudo 密码）
+- [ ] 在 WSL 里一次跑完剩余步骤（下面这一条即可，内含克隆 + 装工具链 + 初始化环境）
+
+```bash
+sudo apt update && sudo apt install -y git \
+  && git clone https://github.com/xh456/mini-infer.git ~/mini-infer \
+  && bash ~/mini-infer/scripts/wsl-setup.sh
+```
+
+> 仓库是公开的，所以 HTTPS 克隆不需要任何凭据。
+> **不要**把仓库放在 `/mnt/d` 下跨系统访问，跨文件系统 IO 会慢十倍；WSL 里用 `~/mini-infer`，
+> 两边用 git 同步（提交在 Windows 侧做，运行在 WSL 侧做）。
 
 > 注意这里有个取舍：仓库主副本放 `D:\dev\mini-infer`（Windows 侧，方便你现在用），
 > WSL 里干活时用 `~/mini-infer` 的克隆。两边用 git 同步，不要用同一个工作区跨系统访问。
