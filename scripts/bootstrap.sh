@@ -49,14 +49,37 @@ fi
 echo "==> 3/5 安装依赖（mode=$MODE）"
 pip_install --upgrade pip wheel
 
-# PyTorch 的 cpu / cuda 轮子不能混装，必须显式指定 index
+# PyTorch 的 cpu / cuda 轮子不能混装，必须显式指定来源。
+# download.pytorch.org 在国内会被连接重置，所以先探测可达性，不通就自动切国内镜像。
+# 注意两者的差别：官方是 PEP 503 索引（用 --index-url），
+# 国内镜像多为平铺目录（用 --find-links，且版本号要带 +cpu 后缀）。
 if [ "$MODE" = "cuda" ]; then
   TORCH_INDEX="https://download.pytorch.org/whl/cu121"
+  TORCH_MIRROR_FLAT="${TORCH_MIRROR_FLAT:-https://mirrors.aliyun.com/pytorch-wheels/cu121}"
+  TORCH_MIRROR_SPEC="torch==2.4.1+cu121"
 else
   TORCH_INDEX="https://download.pytorch.org/whl/cpu"
+  TORCH_MIRROR_FLAT="${TORCH_MIRROR_FLAT:-https://mirrors.aliyun.com/pytorch-wheels/cpu}"
+  TORCH_MIRROR_SPEC="torch==2.4.1+cpu"
 fi
-pip_install "torch==2.4.1" --index-url "$TORCH_INDEX"
-pip_install -r requirements/base.txt
+
+# 其余依赖的来源：国内可设 PIP_INDEX=https://pypi.tuna.tsinghua.edu.cn/simple
+PIP_EXTRA=()
+if [ -n "${PIP_INDEX:-}" ]; then
+  PIP_EXTRA=(-i "$PIP_INDEX")
+  echo "    pip index = $PIP_INDEX"
+fi
+
+echo "    探测官方 PyTorch index：$TORCH_INDEX"
+if curl -sSfI --max-time 8 "$TORCH_INDEX" >/dev/null 2>&1; then
+  echo "    官方可达，使用官方 index"
+  pip_install "torch==2.4.1" --index-url "$TORCH_INDEX"
+else
+  echo "    官方不可达，切换国内镜像：$TORCH_MIRROR_FLAT"
+  pip_install "$TORCH_MIRROR_SPEC" --find-links "$TORCH_MIRROR_FLAT" "${PIP_EXTRA[@]}"
+fi
+
+pip_install -r requirements/base.txt "${PIP_EXTRA[@]}"
 
 echo "==> 4/5 记录环境信息"
 mkdir -p bench/results
