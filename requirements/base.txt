@@ -1,0 +1,11 @@
+# 公共依赖（torch 单独安装，因为 cpu / cuda 轮子来自不同 index）
+# 版本全部固定：半年后要能把同一组数字复现出来，追新会让基线作废。
+
+transformers==4.44.2
+tokenizers==0.19.1
+safetensors==0.4.5
+numpy==1.26.4
+huggingface_hub==0.24.6
+modelscope==1.17.1
+accelerate==0.33.0
+pytest==8.3.2

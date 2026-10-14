@@ -1,0 +1,13 @@
+# 统一换行符: 脚本必须是 LF, 否则在 Linux 实例上会报 "bad interpreter"
+* text=auto
+*.sh text eol=lf
+*.py text eol=lf
+*.csv text eol=lf
+*.md text eol=lf
+
+# 二进制产物
+*.png binary
+*.jpg binary
+*.pdf binary
+*.safetensors binary
+*.gguf binary

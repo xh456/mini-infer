@@ -1,0 +1,62 @@
+# ======================================================================
+# mini-infer
+# 原则: 仓库里只放"人类可读且能重建"的东西 —— 源码、脚本、文档、指标 JSON。
+#      权重、数据、虚拟环境、编译产物一律不入库, 用 scripts/fetch_model.sh 重建。
+# ======================================================================
+
+# --- 虚拟环境 ---
+.venv/
+venv/
+env/
+*.egg-info/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- 编译产物 (C++ / CUDA) ---
+build/
+cmake-build-*/
+*.o
+*.so
+*.a
+*.pyd
+CMakeCache.txt
+CMakeFiles/
+compile_commands.json
+*.cubin
+*.ptx
+
+# --- 模型权重与数据集 (体积大, 永不入库) ---
+models/
+weights/
+data/
+datasets/
+*.safetensors
+*.gguf
+*.onnx
+*.pt
+*.pth
+*.bin
+
+# --- 实验结果: 只保留摘要 JSON, 原始日志不保留 ---
+bench/results/*.log
+bench/results/*.txt
+!bench/results/*.json
+!bench/results/.gitkeep
+
+# --- 密钥与本地覆盖配置 ---
+.env
+*.local
+secrets/
+
+# --- 编辑器与系统 ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
