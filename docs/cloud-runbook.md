@@ -39,10 +39,18 @@ bootstrap 会先探测 download.pytorch.org，不通则自动切阿里云 cu121 
 阶段 C 正式测量：
 
 ```bash
-REQUIRE_QUIET=1 PROMPT_LENS=128,512,2048 DECODE_STEPS=128 TAG=cuda-baseline bash scripts/run_bench.sh
+REQUIRE_QUIET=1 THREADS=1 PROMPT_LENS=128,512,2048 DECODE_STEPS=128 TAG=cuda-baseline bash scripts/run_bench.sh
 ```
 
 专用实例的 loadavg 应接近 0；`REQUIRE_QUIET=1` 会让机器不静默时直接拒绝出数。
+`THREADS=1` 在共享型实例上是必需的（实测能把跨运行差异从 5.7%~12.5% 压到
+0.3%~5.5%）；独享实例上可以不设，让 torch 用满核心。
+
+测完立刻自检复现性（同一会话内背靠背两遍）：
+
+```bash
+RUNS=2 REQUIRE_QUIET=1 bash scripts/repro_check.sh
+```
 
 阶段 D 回传并关机：确认 `bench/results/` 里有新 JSON，回传本地，立刻关机，记台账。
 

@@ -27,16 +27,62 @@ export HF_ENDPOINT="${HF_ENDPOINT:-https://hf-mirror.com}"
 # 与云端镜像保持一致比"追新"重要：3.10 / 3.11 都是安全选择
 PY="${PY:-python3}"
 
-echo "==> 1/5 解释器"
+echo "==> 1/6 系统依赖自检"
+# 这一步是被实测补上的：全新 Ubuntu 22.04 上 `python3 -m venv` 会因为缺少
+# ensurepip 而失败（系统没装 python3-venv 包）。本地 WSL 没暴露这个问题，
+# 因为那里先前跑过 wsl-setup.sh 已经装好了工具链——干净的机器才会暴露假设。
+if [ "${SKIP_APT:-0}" != "1" ] && command -v apt-get >/dev/null 2>&1; then
+  if [ "$(id -u)" = "0" ]; then APT="apt-get"; else APT="sudo apt-get"; fi
+
+  pkgs=()
+  if ! "$PY" -c "import ensurepip" >/dev/null 2>&1; then
+    pkgs+=(python3-venv python3-pip)
+  fi
+  # 后面手写 C++ / SIMD 算子要用到，一次装好，省得再开一次机
+  pkgs+=(python3-dev build-essential)
+
+  echo "    安装或确认：${pkgs[*]}"
+  if ! DEBIAN_FRONTEND=noninteractive $APT install -y -qq "${pkgs[@]}" >/dev/null 2>&1; then
+    echo "    直接安装失败，先更新索引再试一次"
+    $APT update -qq >/dev/null 2>&1 || true
+    DEBIAN_FRONTEND=noninteractive $APT install -y -qq "${pkgs[@]}" >/dev/null 2>&1 || true
+  fi
+fi
+
+if ! "$PY" -c "import ensurepip" >/dev/null 2>&1; then
+  echo "    错误：$PY 缺少 ensurepip，无法创建虚拟环境。" >&2
+  echo "    请先执行：apt-get install -y python3-venv python3-pip" >&2
+  exit 3
+fi
+echo "    通过"
+
+echo "==> 2/6 解释器"
 echo "    $PY -> $($PY --version 2>&1)"
 
-echo "==> 2/5 创建虚拟环境 .venv"
-if [ -d .venv ]; then
-  echo "    已存在，跳过创建（要重建请先 rm -rf .venv）"
-elif command -v uv >/dev/null 2>&1; then
-  uv venv --python "$PY" .venv
+echo "==> 3/6 创建虚拟环境 .venv"
+
+# 判定 .venv 是否真的可用：不仅要存在，还要有可用的安装器。
+# 上次中断可能留下"有 python 但没有 pip"的残骸，只看目录是否存在会让后续莫名失败。
+venv_usable() {
+  [ -x .venv/bin/python ] || return 1
+  .venv/bin/python -c "import sys" >/dev/null 2>&1 || return 1
+  .venv/bin/python -m pip --version >/dev/null 2>&1 && return 0
+  command -v uv >/dev/null 2>&1 && return 0
+  return 1
+}
+
+if venv_usable; then
+  echo "    已存在且可用，跳过创建"
 else
-  "$PY" -m venv .venv
+  if [ -d .venv ]; then
+    echo "    检测到不可用的 .venv（可能上次创建中断），删除后重建"
+    rm -rf .venv
+  fi
+  if command -v uv >/dev/null 2>&1; then
+    uv venv --python "$PY" .venv
+  else
+    "$PY" -m venv .venv
+  fi
 fi
 
 VENV_PY=".venv/bin/python"
@@ -46,7 +92,7 @@ else
   pip_install() { "$VENV_PY" -m pip install "$@"; }
 fi
 
-echo "==> 3/5 安装依赖（mode=$MODE）"
+echo "==> 4/6 安装依赖（mode=$MODE）"
 pip_install --upgrade pip wheel
 
 # PyTorch 的 cpu / cuda 轮子不能混装，必须显式指定来源。
@@ -81,11 +127,11 @@ fi
 
 pip_install -r requirements/base.txt "${PIP_EXTRA[@]}"
 
-echo "==> 4/5 记录环境信息"
+echo "==> 5/6 记录环境信息"
 mkdir -p bench/results
 "$VENV_PY" scripts/env_report.py | tee "bench/results/env-$(date +%Y%m%d-%H%M%S).json"
 
-echo "==> 5/5 拉取基线模型 + 冒烟测试"
+echo "==> 6/6 拉取基线模型 + 冒烟测试"
 bash scripts/fetch_model.sh
 "$VENV_PY" -m pytest tests/ -q
 

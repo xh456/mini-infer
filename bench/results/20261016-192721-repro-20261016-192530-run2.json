@@ -1,0 +1,116 @@
+{
+  "tag": "repro-20261016-192530-run2",
+  "model": "models/Qwen2.5-0.5B-Instruct",
+  "device": "cpu",
+  "dtype": "float32",
+  "batch": 1,
+  "decode_steps": 16,
+  "warmup": 2,
+  "repeats": 5,
+  "torch_threads": 2,
+  "loadavg": [
+    1.244140625,
+    0.4638671875,
+    0.1943359375
+  ],
+  "quiet": false,
+  "num_params": 494032768,
+  "env": {
+    "timestamp": "2026-10-16T19:26:30+08:00",
+    "hostname": "iZra0rmfu81iqiZ",
+    "os": "Linux 5.15.0-191-generic",
+    "python": "3.10.12",
+    "cpu_model": "Intel(R) Xeon(R) Platinum",
+    "cpu_count": 4,
+    "git_commit": null,
+    "git_dirty": false,
+    "torch": "2.4.1+cpu",
+    "cuda_runtime": null,
+    "gpu_name": null,
+    "gpu_mem_gb": null,
+    "gpu_capability": null,
+    "transformers": "4.44.2"
+  },
+  "load_time_s": 2.528,
+  "prefill": [
+    {
+      "prompt_tokens": 128,
+      "latency_ms": 763.4,
+      "latency_ms_median": 814.28,
+      "spread_pct": 18.7,
+      "tokens_per_s": 167.7,
+      "stats": {
+        "min_ms": 763.4,
+        "median_ms": 814.28,
+        "mean_ms": 830.77,
+        "max_ms": 905.86,
+        "spread_pct": 18.7,
+        "samples_ms": [
+          887.09,
+          905.86,
+          783.21,
+          814.28,
+          763.4
+        ]
+      }
+    },
+    {
+      "prompt_tokens": 512,
+      "latency_ms": 3507.96,
+      "latency_ms_median": 3790.88,
+      "spread_pct": 11.4,
+      "tokens_per_s": 146.0,
+      "stats": {
+        "min_ms": 3507.96,
+        "median_ms": 3790.88,
+        "mean_ms": 3726.06,
+        "max_ms": 3909.07,
+        "spread_pct": 11.4,
+        "samples_ms": [
+          3845.54,
+          3909.07,
+          3576.88,
+          3507.96,
+          3790.88
+        ]
+      }
+    }
+  ],
+  "decode": {
+    "prompt_tokens": 32,
+    "ttft_ms": 368.53,
+    "ttft_stats": {
+      "min_ms": 368.53,
+      "median_ms": 401.97,
+      "mean_ms": 402.68,
+      "max_ms": 422.49,
+      "spread_pct": 14.6,
+      "samples_ms": [
+        368.53,
+        401.97,
+        421.07,
+        399.32,
+        422.49
+      ]
+    },
+    "tpot_ms": 111.95,
+    "tpot_ms_median": 130.88,
+    "tpot_valid": true,
+    "tokens_per_s": 8.9,
+    "total_ms_for_N_steps": 2047.76,
+    "total_stats": {
+      "min_ms": 2047.76,
+      "median_ms": 2365.16,
+      "mean_ms": 2319.41,
+      "max_ms": 2614.31,
+      "spread_pct": 27.7,
+      "samples_ms": [
+        2614.31,
+        2088.63,
+        2365.16,
+        2047.76,
+        2481.2
+      ]
+    }
+  }
+}

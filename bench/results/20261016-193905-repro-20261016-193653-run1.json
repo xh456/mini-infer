@@ -1,0 +1,128 @@
+{
+  "tag": "repro-20261016-193653-run1",
+  "model": "models/Qwen2.5-0.5B-Instruct",
+  "device": "cpu",
+  "dtype": "float32",
+  "batch": 1,
+  "decode_steps": 16,
+  "warmup": 2,
+  "repeats": 8,
+  "torch_threads": 1,
+  "loadavg": [
+    0.1005859375,
+    0.140625,
+    0.169921875
+  ],
+  "quiet": true,
+  "num_params": 494032768,
+  "env": {
+    "timestamp": "2026-10-16T19:36:58+08:00",
+    "hostname": "iZra0rmfu81iqiZ",
+    "os": "Linux 5.15.0-191-generic",
+    "python": "3.10.12",
+    "cpu_model": "Intel(R) Xeon(R) Platinum",
+    "cpu_count": 4,
+    "git_commit": null,
+    "git_dirty": false,
+    "torch": "2.4.1+cpu",
+    "cuda_runtime": null,
+    "gpu_name": null,
+    "gpu_mem_gb": null,
+    "gpu_capability": null,
+    "transformers": "4.44.2"
+  },
+  "load_time_s": 3.394,
+  "prefill": [
+    {
+      "prompt_tokens": 128,
+      "latency_ms": 1475.61,
+      "latency_ms_median": 1570.43,
+      "spread_pct": 15.5,
+      "tokens_per_s": 86.7,
+      "stats": {
+        "min_ms": 1475.61,
+        "median_ms": 1570.43,
+        "mean_ms": 1577.07,
+        "max_ms": 1704.96,
+        "spread_pct": 15.5,
+        "samples_ms": [
+          1676.03,
+          1475.61,
+          1606.65,
+          1642.07,
+          1704.96,
+          1534.21,
+          1489.79,
+          1487.25
+        ]
+      }
+    },
+    {
+      "prompt_tokens": 512,
+      "latency_ms": 6022.64,
+      "latency_ms_median": 6634.85,
+      "spread_pct": 17.3,
+      "tokens_per_s": 85.0,
+      "stats": {
+        "min_ms": 6022.64,
+        "median_ms": 6634.85,
+        "mean_ms": 6580.7,
+        "max_ms": 7064.86,
+        "spread_pct": 17.3,
+        "samples_ms": [
+          7064.86,
+          6064.36,
+          6581.03,
+          6705.72,
+          6653.57,
+          6022.64,
+          6616.13,
+          6937.27
+        ]
+      }
+    }
+  ],
+  "decode": {
+    "prompt_tokens": 32,
+    "ttft_ms": 688.42,
+    "ttft_stats": {
+      "min_ms": 688.42,
+      "median_ms": 718.01,
+      "mean_ms": 725.94,
+      "max_ms": 784.56,
+      "spread_pct": 14.0,
+      "samples_ms": [
+        784.56,
+        769.8,
+        690.09,
+        688.42,
+        706.57,
+        717.33,
+        718.69,
+        732.07
+      ]
+    },
+    "tpot_ms": 187.41,
+    "tpot_ms_median": 201.87,
+    "tpot_valid": true,
+    "tokens_per_s": 5.3,
+    "total_ms_for_N_steps": 3499.57,
+    "total_stats": {
+      "min_ms": 3499.57,
+      "median_ms": 3746.03,
+      "mean_ms": 3766.33,
+      "max_ms": 4109.69,
+      "spread_pct": 17.4,
+      "samples_ms": [
+        3499.57,
+        3598.69,
+        3925.12,
+        3758.03,
+        3734.04,
+        3724.71,
+        4109.69,
+        3780.8
+      ]
+    }
+  }
+}

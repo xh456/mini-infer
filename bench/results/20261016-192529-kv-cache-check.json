@@ -1,0 +1,31 @@
+{
+  "tag": "kv-cache-check",
+  "model": "models/Qwen2.5-0.5B-Instruct",
+  "layers": 24,
+  "kv_heads": 2,
+  "head_dim": 64,
+  "dtype": "float32",
+  "batch": 1,
+  "rows": [
+    {
+      "seq_len": 128,
+      "batch": 1,
+      "cache_tensors": 48,
+      "actual_bytes": 3145728,
+      "actual_mib": 3.0,
+      "predicted_bytes": 3145728,
+      "predicted_mib": 3.0,
+      "match": true
+    },
+    {
+      "seq_len": 512,
+      "batch": 1,
+      "cache_tensors": 48,
+      "actual_bytes": 12582912,
+      "actual_mib": 12.0,
+      "predicted_bytes": 12582912,
+      "predicted_mib": 12.0,
+      "match": true
+    }
+  ]
+}

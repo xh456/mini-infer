@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-10-16T19:19:46+08:00",
+  "hostname": "iZra0rmfu81iqiZ",
+  "os": "Linux 5.15.0-191-generic",
+  "python": "3.10.12",
+  "cpu_model": "Intel(R) Xeon(R) Platinum",
+  "cpu_count": 4,
+  "git_commit": null,
+  "git_dirty": false,
+  "torch": "2.4.1+cpu",
+  "cuda_runtime": null,
+  "gpu_name": null,
+  "gpu_mem_gb": null,
+  "gpu_capability": null,
+  "transformers": "4.44.2"
+}

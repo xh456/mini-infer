@@ -20,6 +20,7 @@ DECODE_STEPS="${DECODE_STEPS:-128}"
 BATCH="${BATCH:-1}"
 WARMUP="${WARMUP:-3}"
 REPEATS="${REPEATS:-10}"
+THREADS="${THREADS:-0}"
 TAG="${TAG:-hf-baseline}"
 
 mkdir -p bench/results
@@ -28,6 +29,11 @@ mkdir -p bench/results
 EXTRA_ARGS=()
 if [ "${REQUIRE_QUIET:-0}" = "1" ]; then
   EXTRA_ARGS+=(--require-quiet)
+fi
+# THREADS>0 时固定 torch 线程数：共享实例上多线程互相争抢会放大方差，
+# 单线程 + 取最小值往往反而更稳（2026-10-16 在阿里云共享型实例上实测）。
+if [ "$THREADS" != "0" ]; then
+  EXTRA_ARGS+=(--threads "$THREADS")
 fi
 
 "$PY" bench/baseline_hf.py \
