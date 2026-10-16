@@ -17,6 +17,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import statistics
 import sys
 import time
 from datetime import datetime
@@ -35,16 +37,50 @@ def sync(device: str) -> None:
         torch.cuda.synchronize()
 
 
-def timeit(fn, *, warmup: int, repeats: int, device: str) -> float:
-    """返回单次平均耗时（秒）。warmup 之后的测量才作数。"""
+def samples(fn, *, warmup: int, repeats: int, device: str) -> list[float]:
+    """返回每次迭代的耗时样本（秒），warmup 之后才开始计时。
+
+    为什么保留全部样本而不是只报平均：同一台机器重复测量时，
+    短窗口加系统噪声（后台进程、CPU 降频）会让均值漂移几十个百分点。
+    只有保留样本才能看出离散度；报告时用最小值作为"这台机器能做到多快"的估计，
+    因为噪声几乎只会让结果变慢，不会让它变快。
+    """
     for _ in range(warmup):
         fn()
     sync(device)
-    started = time.perf_counter()
+    out: list[float] = []
     for _ in range(repeats):
+        started = time.perf_counter()
         fn()
-    sync(device)
-    return (time.perf_counter() - started) / repeats
+        sync(device)
+        out.append(time.perf_counter() - started)
+    return out
+
+
+def stats(values: list[float]) -> dict:
+    ordered = sorted(values)
+    lo, hi = ordered[0], ordered[-1]
+    return {
+        "min_ms": round(lo * 1000, 2),
+        "median_ms": round(statistics.median(ordered) * 1000, 2),
+        "mean_ms": round(statistics.fmean(ordered) * 1000, 2),
+        "max_ms": round(hi * 1000, 2),
+        "spread_pct": round((hi - lo) / lo * 100, 1) if lo > 0 else None,
+        "samples_ms": [round(v * 1000, 2) for v in values],
+    }
+
+
+def quiet_check(threshold: float) -> tuple[bool, list[float] | None]:
+    """机器是否处于"静默"状态（loadavg 低于阈值）。
+
+    这个检查是被实测逼出来的：2026-10-16 在同一台笔记本上重复测量，
+    同一配置跨运行差异达 70%~100%，单次运行内部离散度甚至超过 1000%。
+    这种数字没有比较价值，与其默默产出垃圾数据，不如直接告诉使用者。
+    """
+    if not hasattr(os, "getloadavg"):
+        return True, None
+    values = list(os.getloadavg())
+    return values[0] <= threshold, values
 
 
 def build_inputs(tokenizer, length: int, batch: int, device: str):
@@ -70,7 +106,13 @@ def main() -> int:
     parser.add_argument("--decode-prompt-len", type=int, default=32)
     parser.add_argument("--batch", type=int, default=1)
     parser.add_argument("--warmup", type=int, default=3)
-    parser.add_argument("--repeats", type=int, default=3)
+    parser.add_argument("--repeats", type=int, default=10)
+    parser.add_argument("--threads", type=int, default=0,
+                        help="torch 线程数，0 表示保留默认值")
+    parser.add_argument("--quiet-loadavg", type=float, default=1.0,
+                        help="1 分钟负载高于该值即视为机器不静默")
+    parser.add_argument("--require-quiet", action="store_true",
+                        help="机器不静默时直接退出，不出数")
     parser.add_argument("--dtype", default="auto", choices=["auto", "float16", "float32"])
     parser.add_argument("--tag", default="hf-baseline")
     parser.add_argument("--out-dir", default="bench/results")
@@ -79,6 +121,19 @@ def main() -> int:
     if not (Path(args.model) / "config.json").is_file():
         print(f"[bench] 找不到模型：{args.model}，先跑 scripts/fetch_model.sh", file=sys.stderr)
         return 2
+
+    quiet, load = quiet_check(args.quiet_loadavg)
+    if load is not None:
+        print(f"[bench] loadavg = {load[0]:.2f} / {load[1]:.2f} / {load[2]:.2f}"
+              f"（阈值 {args.quiet_loadavg}）")
+    if not quiet:
+        advice = ("机器当前不静默，测量结果会严重失真"
+                  "（实测同一配置跨运行可差 70% 以上）。"
+                  "建议关掉浏览器、暂停网盘同步与杀毒扫描后重测，或改用专用云实例。")
+        if args.require_quiet:
+            print(f"[bench] 中止：{advice}", file=sys.stderr)
+            return 3
+        print(f"[bench] 警告：{advice}")
 
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -90,7 +145,12 @@ def main() -> int:
 
     torch.manual_seed(0)  # 固定随机性，保证可复现
 
-    print(f"[bench] device={device} dtype={dtype} batch={args.batch}")
+    # 线程数显式固定：不固定的话，宿主机负载变化会改变 OpenMP 的线程调度，
+    # 这是 CPU 上测量方差最大的来源之一。
+    if args.threads > 0:
+        torch.set_num_threads(args.threads)
+    print(f"[bench] device={device} dtype={dtype} batch={args.batch} "
+          f"threads={torch.get_num_threads()} warmup={args.warmup} repeats={args.repeats}")
 
     if device == "cuda":
         torch.cuda.reset_peak_memory_stats()
@@ -110,6 +170,9 @@ def main() -> int:
         "decode_steps": args.decode_steps,
         "warmup": args.warmup,
         "repeats": args.repeats,
+        "torch_threads": torch.get_num_threads(),
+        "loadavg": list(os.getloadavg()) if hasattr(os, "getloadavg") else None,
+        "quiet": quiet,
         "num_params": sum(p.numel() for p in model.parameters()),
         "env": collect(),
         "load_time_s": round(load_time_s, 3),
@@ -125,14 +188,19 @@ def main() -> int:
             with torch.inference_mode():
                 model(input_ids=input_ids, attention_mask=attention_mask, use_cache=True)
 
-        latency = timeit(prefill, warmup=args.warmup, repeats=args.repeats, device=device)
+        raw = samples(prefill, warmup=args.warmup, repeats=args.repeats, device=device)
+        st = stats(raw)
         entry = {
             "prompt_tokens": length,
-            "latency_ms": round(latency * 1000, 2),
-            "tokens_per_s": round(length * args.batch / latency, 1),
+            "latency_ms": st["min_ms"],           # 以最小值为准
+            "latency_ms_median": st["median_ms"],
+            "spread_pct": st["spread_pct"],
+            "tokens_per_s": round(length * args.batch / (st["min_ms"] / 1000), 1),
+            "stats": st,
         }
         result["prefill"].append(entry)
-        print(f"[bench] prefill {length:>5} token: {entry['latency_ms']:>8.2f} ms  "
+        print(f"[bench] prefill {length:>5} token: {entry['latency_ms']:>8.2f} ms (min) / "
+              f"{entry['latency_ms_median']:>8.2f} ms (median), 离散 {entry['spread_pct']:>5.1f}%  "
               f"({entry['tokens_per_s']:>8.1f} tok/s)")
 
     # ---- decode：差值法分离首 token 与后续单步 ----
@@ -151,22 +219,43 @@ def main() -> int:
                 pad_token_id=tokenizer.eos_token_id,
             )
 
-    t_first = timeit(lambda: generate(1), warmup=args.warmup,
+    s_first = samples(lambda: generate(1), warmup=args.warmup,
+                      repeats=args.repeats, device=device)
+    s_full = samples(lambda: generate(args.decode_steps), warmup=args.warmup,
                      repeats=args.repeats, device=device)
-    t_full = timeit(lambda: generate(args.decode_steps), warmup=args.warmup,
-                    repeats=args.repeats, device=device)
-    tpot_s = (t_full - t_first) / max(args.decode_steps - 1, 1)
+    steps = max(args.decode_steps - 1, 1)
+    tpot_min = (min(s_full) - min(s_first)) / steps
+    tpot_median = (statistics.median(s_full) - statistics.median(s_first)) / steps
+
+    # 非物理解护栏：decode 步数太少时，只多出几个 token 可除，
+    # 噪声会盖过信号，甚至算出负数（2026-10-16 实测踩到过）。
+    # 与其把垃圾数字写进 JSON，不如标记为无效。
+    tpot_valid = tpot_min > 0
+    if args.decode_steps < 8:
+        print(f"[bench] 警告：decode 步数只有 {args.decode_steps}，"
+              f"TPOT 的噪声会大于信号，建议 >=32")
+    if not tpot_valid:
+        print(f"[bench] 警告：TPOT 出现非物理解（{tpot_min * 1000:.2f} ms），"
+              f"本次 decode 数据作废")
 
     result["decode"] = {
         "prompt_tokens": args.decode_prompt_len,
-        "ttft_ms": round(t_first * 1000, 2),
-        "tpot_ms": round(tpot_s * 1000, 2),
-        "tokens_per_s": round(1.0 / tpot_s, 1) if tpot_s > 0 else None,
-        "total_ms_for_N_steps": round(t_full * 1000, 2),
+        "ttft_ms": round(min(s_first) * 1000, 2),
+        "ttft_stats": stats(s_first),
+        "tpot_ms": round(tpot_min * 1000, 2) if tpot_valid else None,
+        "tpot_ms_median": round(tpot_median * 1000, 2) if tpot_valid else None,
+        "tpot_valid": tpot_valid,
+        "tokens_per_s": round(1.0 / tpot_min, 1) if tpot_valid else None,
+        "total_ms_for_N_steps": round(min(s_full) * 1000, 2),
+        "total_stats": stats(s_full),
     }
-    print(f"[bench] decode TTFT {result['decode']['ttft_ms']:.2f} ms, "
-          f"TPOT {result['decode']['tpot_ms']:.2f} ms "
-          f"({result['decode']['tokens_per_s']} tok/s)")
+    if tpot_valid:
+        print(f"[bench] decode TTFT {result['decode']['ttft_ms']:.2f} ms (min), "
+              f"TPOT {result['decode']['tpot_ms']:.2f} ms (min) / "
+              f"{result['decode']['tpot_ms_median']:.2f} ms (median) "
+              f"({result['decode']['tokens_per_s']} tok/s)")
+    else:
+        print(f"[bench] decode TTFT {result['decode']['ttft_ms']:.2f} ms (min)，TPOT 无效")
 
     if device == "cuda":
         result["peak_memory_gb"] = round(torch.cuda.max_memory_allocated() / 1024**3, 3)

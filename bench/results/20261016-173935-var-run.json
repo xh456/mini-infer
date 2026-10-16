@@ -1,0 +1,134 @@
+{
+  "tag": "var-run",
+  "model": "models/Qwen2.5-0.5B-Instruct",
+  "device": "cpu",
+  "dtype": "float32",
+  "batch": 1,
+  "decode_steps": 16,
+  "warmup": 2,
+  "repeats": 10,
+  "torch_threads": 4,
+  "loadavg": [
+    3.4384765625,
+    1.24365234375,
+    0.4560546875
+  ],
+  "num_params": 494032768,
+  "env": {
+    "timestamp": "2026-10-16T17:28:53+08:00",
+    "hostname": "hy",
+    "os": "Linux 6.18.54.1-microsoft-standard-WSL2",
+    "python": "3.10.12",
+    "cpu_model": "Intel(R) Core(TM) i5-10210U CPU @ 1.60GHz",
+    "cpu_count": 8,
+    "git_commit": "d071425",
+    "git_dirty": true,
+    "torch": "2.4.1+cpu",
+    "cuda_runtime": null,
+    "gpu_name": null,
+    "gpu_mem_gb": null,
+    "gpu_capability": null,
+    "transformers": "4.44.2"
+  },
+  "load_time_s": 78.626,
+  "prefill": [
+    {
+      "prompt_tokens": 128,
+      "latency_ms": 2655.47,
+      "latency_ms_median": 3748.4,
+      "spread_pct": 95.2,
+      "tokens_per_s": 48.2,
+      "stats": {
+        "min_ms": 2655.47,
+        "median_ms": 3748.4,
+        "mean_ms": 3808.27,
+        "max_ms": 5184.13,
+        "spread_pct": 95.2,
+        "samples_ms": [
+          3546.37,
+          4409.73,
+          5184.13,
+          2682.25,
+          2655.47,
+          3274.4,
+          3792.67,
+          4069.98,
+          3704.14,
+          4763.57
+        ]
+      }
+    },
+    {
+      "prompt_tokens": 512,
+      "latency_ms": 13413.07,
+      "latency_ms_median": 33520.13,
+      "spread_pct": 284.3,
+      "tokens_per_s": 38.2,
+      "stats": {
+        "min_ms": 13413.07,
+        "median_ms": 33520.13,
+        "mean_ms": 32367.94,
+        "max_ms": 51547.56,
+        "spread_pct": 284.3,
+        "samples_ms": [
+          13413.07,
+          22761.56,
+          51547.56,
+          42370.74,
+          21352.07,
+          15044.24,
+          27213.06,
+          39827.21,
+          49076.21,
+          41073.7
+        ]
+      }
+    }
+  ],
+  "decode": {
+    "prompt_tokens": 32,
+    "ttft_ms": 1090.14,
+    "ttft_stats": {
+      "min_ms": 1090.14,
+      "median_ms": 2102.01,
+      "mean_ms": 2581.65,
+      "max_ms": 7584.95,
+      "spread_pct": 595.8,
+      "samples_ms": [
+        7584.95,
+        4209.07,
+        2098.78,
+        2363.16,
+        1613.28,
+        2224.27,
+        2105.23,
+        1090.14,
+        1238.87,
+        1288.73
+      ]
+    },
+    "tpot_ms": 257.97,
+    "tpot_ms_median": 342.17,
+    "tokens_per_s": 3.9,
+    "total_ms_for_N_steps": 4959.71,
+    "total_stats": {
+      "min_ms": 4959.71,
+      "median_ms": 7234.5,
+      "mean_ms": 7480.16,
+      "max_ms": 10570.26,
+      "spread_pct": 113.1,
+      "samples_ms": [
+        10570.26,
+        4959.71,
+        9665.52,
+        6632.96,
+        7015.01,
+        6579.67,
+        7514.14,
+        8051.71,
+        7453.98,
+        6358.61
+      ]
+    }
+  }
+}

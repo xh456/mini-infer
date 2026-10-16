@@ -19,9 +19,16 @@ PROMPT_LENS="${PROMPT_LENS:-128,512,2048}"
 DECODE_STEPS="${DECODE_STEPS:-128}"
 BATCH="${BATCH:-1}"
 WARMUP="${WARMUP:-3}"
+REPEATS="${REPEATS:-10}"
 TAG="${TAG:-hf-baseline}"
 
 mkdir -p bench/results
+
+# REQUIRE_QUIET=1 时，机器不静默就直接拒绝出数（用于正式基线）
+EXTRA_ARGS=()
+if [ "${REQUIRE_QUIET:-0}" = "1" ]; then
+  EXTRA_ARGS+=(--require-quiet)
+fi
 
 "$PY" bench/baseline_hf.py \
   --model "$MODEL" \
@@ -29,6 +36,8 @@ mkdir -p bench/results
   --decode-steps "$DECODE_STEPS" \
   --batch "$BATCH" \
   --warmup "$WARMUP" \
+  --repeats "$REPEATS" \
+  "${EXTRA_ARGS[@]}" \
   --tag "$TAG"
 
 echo "[run_bench] 结果已写入 bench/results/"
