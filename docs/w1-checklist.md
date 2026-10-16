@@ -60,7 +60,7 @@ sudo apt update && sudo apt install -y git \
 
 ### Day 4（10/17）
 
-- [ ] 注册 2-3 家云 GPU 平台并完成实名认证
+- [x] 注册云 GPU 平台并完成实名认证（已完成）
 - [ ] 领取新用户券，把券的面额和有效期记进 `budget/gpu_budget.csv` 备注列
 - [ ] 建立台账使用习惯：开机前记录计划，关机后补上实际耗时与花费
 
