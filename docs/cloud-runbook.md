@@ -67,6 +67,18 @@ REQUIRE_QUIET=1 PROMPT_LENS=128,512,2048 DECODE_STEPS=128 TAG=cuda-baseline bash
 
 ## 阿里云专有注意事项
 
+**镜像必须是 Ubuntu 22.04（或 24.04）。这不是偏好，是硬约束。**
+
+2026-10-16 实测踩过一次：选了 Ubuntu 26.04，系统里只有 Python 3.14，
+而 `torch==2.4.1` 的轮子只到 cp312（已核对镜像站：提供 cp38/cp39/cp310/cp311/cp312）。
+结果就是 `bootstrap.sh` 会在装 torch 那一步直接失败。
+
+顺带排除的两个坑：Windows Server 镜像（我们全是 bash 脚本，且授权费更贵）、
+以及任何"更新的"发行版——版本冻结是本项目可信度的来源，不要为了追新而升级依赖。
+
+在阿里云上换镜像不必重建实例：**实例 → 更多 → 云盘和快照 → 更换操作系统（更换系统盘）**，
+公网 IP 与密钥绑定都会保留。
+
 **产品选择：优先 PAI-DSW（交互式建模），备选 ECS 按量 GPU。**
 
 - PAI-DSW 按小时计费，自带 JupyterLab 与网页终端，镜像预装 PyTorch/CUDA，
